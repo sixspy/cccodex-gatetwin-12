@@ -64,6 +64,20 @@ CREATE TABLE IF NOT EXISTS 旁路匣 (
   载荷 TEXT NOT NULL,
   时刻 TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS 漂移审计 (
+  编号 INTEGER PRIMARY KEY AUTOINCREMENT,
+  行程键 TEXT NOT NULL,
+  卡号 TEXT NOT NULL DEFAULT '',
+  进站事件编号 TEXT NOT NULL DEFAULT '',
+  出站事件编号 TEXT NOT NULL DEFAULT '',
+  进站事件时 TEXT NOT NULL,
+  出站事件时 TEXT NOT NULL,
+  负历时秒 INTEGER NOT NULL DEFAULT 0,
+  漂移秒 INTEGER NOT NULL DEFAULT 0,
+  口径 TEXT NOT NULL DEFAULT '',
+  命运 TEXT NOT NULL DEFAULT '',
+  时刻 TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS 行程贯验 (
   编号 INTEGER PRIMARY KEY AUTOINCREMENT,
   时刻 TEXT NOT NULL,
@@ -94,6 +108,12 @@ def 初始化库() -> None:
             "骨架": "刷卡点装载→同卡进站出站成对物化→缺腿异向超时旁路→行程账与刷卡点互证",
         }.items():
             conn.execute("INSERT INTO 站规(键, 值) VALUES (?, ?)", (k, v))
+    # 闸机时钟漂移口径（全局唯一：漂移秒吸收）。老库缺键时补齐。
+    for k, v in {
+        "漂移秒": "30",
+        "负历时口径": "漂移秒吸收",
+    }.items():
+        conn.execute("INSERT OR IGNORE INTO 站规(键, 值) VALUES (?, ?)", (k, v))
     if conn.execute("SELECT COUNT(*) AS c FROM 线路").fetchone()["c"] == 0:
         conn.execute("INSERT INTO 线路(线路键, 名称) VALUES (?, ?)", ("线1", "一号线"))
         for i, (k, n) in enumerate(

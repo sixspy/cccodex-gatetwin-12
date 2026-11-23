@@ -76,6 +76,7 @@ th { color: var(--淡); font-weight: 500; background: var(--块亮) }
 .徽章 { display: inline-block; padding: 0.12rem 0.45rem; border-radius: 3px; font-size: 0.76rem; font-weight: 600 }
 .徽章.通 { background: var(--通底); color: var(--通) }
 .徽章.败 { background: var(--败底); color: var(--败) }
+.徽章.警 { background: rgba(42, 111, 151, 0.12); color: var(--水) }
 .段 { margin-top: 1.25rem }
 .段题 { font-size: 0.88rem; margin: 0 0 0.55rem; color: var(--水); font-weight: 600 }
 @media (max-width: 900px) {

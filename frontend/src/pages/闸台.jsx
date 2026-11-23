@@ -21,6 +21,7 @@ export default function 闸台() {
         <div className="阶"><div className="序">③ 行程</div><b>{数.行程数 ?? 0}</b><span>已成对</span></div>
         <div className="阶"><div className="序">④ 旁路</div><b>{数.旁路匣 ?? 0}</b><span>旁路匣</span></div>
         <div className="阶"><div className="序">⑤ 成对刷卡</div><b>{数.已成对 ?? 0}</b><span>命运=已成对</span></div>
+        <div className="阶"><div className="序">⑥ 漂移审计</div><b>{数.漂移审计 ?? 0}</b><span>负历时吸收留痕</span></div>
       </div>
       <div className="提示条">
         冒烟：<Link to="/刷卡流">刷卡流</Link> 依次推成对 / 缺腿超时 / 出站孤儿 → 看开腿账与行程账 →{" "}

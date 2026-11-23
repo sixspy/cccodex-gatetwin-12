@@ -3,7 +3,8 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from app.db import 夹具目录, 连接
-from app.services import 装载, 贯验, 目录
+from app.services import 装载, 贯验, 目录, 配对
+from app.modules import 闸机时钟漂移 as 漂移
 
 路由 = APIRouter(prefix="/api")
 
@@ -102,6 +103,29 @@ def 列旁路():
         conn.close()
 
 
+@路由.get("/漂移裁决")
+def 漂移裁决(进站时: str, 出站时: str):
+    """只读裁决：按站规漂移秒与全局口径给出命运，不写库。
+
+    返回 进站时/出站时/负历时秒/漂移秒/口径/命运/valid。
+    """
+    conn = 连接()
+    try:
+        站 = {r["键"]: r["值"] for r in conn.execute("SELECT 键, 值 FROM 站规")}
+    finally:
+        conn.close()
+    return 漂移.裁决(进站时, 出站时, 漂移.取漂移秒(站))
+
+
+@路由.get("/漂移审计")
+def 列漂移审计():
+    conn = 连接()
+    try:
+        return [dict(r) for r in conn.execute("SELECT * FROM 漂移审计 ORDER BY 编号 DESC LIMIT 100")]
+    finally:
+        conn.close()
+
+
 @路由.get("/批次")
 def 列批次():
     conn = 连接()
@@ -121,7 +145,11 @@ def 列批次():
 
 @路由.post("/装载")
 def 做装载(体: 装载请求):
-    return 装载.装一批(体.model_dump())
+    try:
+        return 装载.装一批(体.model_dump())
+    except (漂移.裁决冲突, 配对.配对冲突) as e:
+        # 裁决与写库同成败：冲突即整批回滚，调用方应重试
+        raise HTTPException(409, f"并发裁决冲突，整批已回滚：{e}")
 
 
 @路由.post("/装载/夹具")
@@ -129,7 +157,10 @@ def 装夹具(名: str = "成对样例"):
     路径 = 夹具目录 / f"{名}.json"
     if not 路径.exists():
         raise HTTPException(404, f"夹具不存在:{名}")
-    return 装载.装一批(json.loads(路径.read_text(encoding="utf-8")))
+    try:
+        return 装载.装一批(json.loads(路径.read_text(encoding="utf-8")))
+    except (漂移.裁决冲突, 配对.配对冲突) as e:
+        raise HTTPException(409, f"并发裁决冲突，整批已回滚：{e}")
 
 
 @路由.post("/贯验")
